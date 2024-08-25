@@ -6,4 +6,15 @@
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Workers.DataAccess\Workers.DataAccess.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Endpoints\Worker\CreateWorker\" />
+      <Folder Include="Endpoints\Worker\DeleteWorker\" />
+      <Folder Include="Endpoints\Worker\GetWorker\" />
+      <Folder Include="Endpoints\Worker\UpdateWorker\" />
+    </ItemGroup>
+
 </Project>
