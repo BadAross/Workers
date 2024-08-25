@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Workers.DataAccess", "Workers.DataAccess\Workers.DataAccess.csproj", "{F5D038D4-E764-43E5-8447-5994F5823DDC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Workers.Api", "Workers.Api\Workers.Api.csproj", "{6D5DCFC8-208B-498A-A609-4500AA288706}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F5D038D4-E764-43E5-8447-5994F5823DDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5D038D4-E764-43E5-8447-5994F5823DDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5D038D4-E764-43E5-8447-5994F5823DDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5D038D4-E764-43E5-8447-5994F5823DDC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D5DCFC8-208B-498A-A609-4500AA288706}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D5DCFC8-208B-498A-A609-4500AA288706}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D5DCFC8-208B-498A-A609-4500AA288706}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D5DCFC8-208B-498A-A609-4500AA288706}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
