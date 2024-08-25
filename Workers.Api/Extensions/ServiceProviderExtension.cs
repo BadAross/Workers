@@ -1,5 +1,7 @@
 ﻿using FastEndpoints.Swagger;
 using NSwag;
+using Workers.DataAccess.Services.Implementations;
+using Workers.DataAccess.Services.Interfaces;
 
 namespace Workers.Api.Extensions;
 
@@ -20,5 +22,10 @@ public static class ServiceProviderExtension
             };
             settings.FlattenSchema = true;
         });
+    }
+
+    public static void AddScope(this IServiceCollection services)
+    {
+        services.AddScoped<IWorkerService, WorkerService>();
     }
 }

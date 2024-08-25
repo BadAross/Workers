@@ -9,7 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 services.AddFastEndpoints()
     .AddSwaggerGenWithSettings();
-
+services.AddScope();
 
 var app = builder.Build();
 app.UseFastEndpoints(conf =>
