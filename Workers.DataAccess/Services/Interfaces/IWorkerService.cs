@@ -1,4 +1,5 @@
 ﻿using Workers.DataAccess.Dto.Requests;
+using Workers.DataAccess.Dto.Responses;
 
 namespace Workers.DataAccess.Services.Interfaces;
 
@@ -19,4 +20,11 @@ public interface IWorkerService
     /// </summary>
     /// <param name="workerId">Идентификатор сотрудника</param>
     Task DeleteWorkerAsync(int workerId);
+    
+    /// <summary>
+    /// Метод получения сотрудника по фильтрам
+    /// </summary>
+    /// <param name="filter">Фильтр</param>
+    /// <returns>Список сотрудников</returns>
+    Task<GetManyWorkerResponse> GetManyWorkerAsync(GetManyWorkerRequest filter);
 }
