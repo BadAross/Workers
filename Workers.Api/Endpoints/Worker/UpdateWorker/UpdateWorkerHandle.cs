@@ -1,37 +1,37 @@
 ﻿using FastEndpoints;
+using Workers.DataAccess.Dto.Requests;
 using Workers.DataAccess.Services.Interfaces;
 
-namespace Workers.Api.Endpoints.Worker.DeleteWorker;
+namespace Workers.Api.Endpoints.Worker.UpdateWorker;
 
-/// <summary>
-/// Метод удаления сотрудника
-/// </summary>
-public sealed class DeleteWorkerHandle(IWorkerService workerService) 
-    : EndpointWithoutRequest 
+public sealed class UpdateWorkerHandle(IWorkerService workerService)
+    : Endpoint<UpdateWorkerRequest>
 {
     private readonly IWorkerService _workerService = workerService;
 
     /// <inheritdoc />
     public override void Configure()
     {
-        Delete("{workerId}");
+        Put("{workerId}");
         Group<WorkerGroup>();
         Summary(sum =>
         {
-            sum.Summary = "Удаление сотрудника";
+            sum.Summary = "Изменить данные сотрудника";
         });
         AllowAnonymous();
     }
     
     /// <summary>
-    /// Удаление сотрудника
+    /// Создание сотрудника
     /// </summary>
+    /// <param name="req">запрос</param>
     /// <param name="ct">токен отмены</param>
     public override async Task HandleAsync(
-         CancellationToken ct)
+        UpdateWorkerRequest req, CancellationToken ct)
     {
         var workerId = Route<int>("workerId");
-        await _workerService.DeleteWorkerAsync(workerId);
+        req.SetId(workerId);
+        await _workerService.UpdateWorkerAsync(req);
         await SendOkAsync(ct);
     }
 }

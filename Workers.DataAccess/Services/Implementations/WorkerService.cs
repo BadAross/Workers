@@ -25,4 +25,9 @@ public sealed class WorkerService : IWorkerService
     {
         return new();
     }
+    
+    /// <inheritdoc/> 
+    public async Task UpdateWorkerAsync(UpdateWorkerRequest request)
+    {
+    }
 }

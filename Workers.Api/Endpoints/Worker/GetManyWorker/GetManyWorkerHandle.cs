@@ -17,7 +17,7 @@ public sealed class GetManyWorkerHandle(IWorkerService workerService)
     /// <inheritdoc />
     public override void Configure()
     {
-        Put("");
+        Get("");
         Group<WorkerGroup>();
         Summary(sum =>
         {

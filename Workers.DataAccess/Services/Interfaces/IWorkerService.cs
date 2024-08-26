@@ -11,7 +11,7 @@ public interface IWorkerService
     /// <summary>
     /// Метод создания сотрудника
     /// </summary>
-    /// <param name="request">запрос</param>
+    /// <param name="request">Запрос</param>
     /// <returns>Идентификатор созданного сотрудника</returns>
     Task<int> CreateWorkerAsync(CreateWorkerRequest request);
     
@@ -27,4 +27,10 @@ public interface IWorkerService
     /// <param name="filter">Фильтр</param>
     /// <returns>Список сотрудников</returns>
     Task<GetManyWorkerResponse> GetManyWorkerAsync(GetManyWorkerRequest filter);
+    
+    /// <summary>
+    /// Метод получения сотрудника по фильтрам
+    /// </summary>
+    /// <param name="request">Запрос</param>
+    Task UpdateWorkerAsync(UpdateWorkerRequest request);
 }
