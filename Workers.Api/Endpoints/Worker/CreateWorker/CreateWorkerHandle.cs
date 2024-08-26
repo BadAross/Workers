@@ -4,16 +4,15 @@ using Workers.DataAccess.Services.Interfaces;
 
 namespace Workers.Api.Endpoints.Worker.CreateWorker;
 
-public class CreateWorkerHandle
+/// <summary>
+/// Метод создания сотрудника
+/// </summary>
+/// <param name="workerService"></param>
+public class CreateWorkerHandle(IWorkerService workerService) 
     : Endpoint<CreateWorkerRequest, int>
 {
-    private readonly IWorkerService _workerService;
+    private readonly IWorkerService _workerService = workerService;
 
-    public CreateWorkerHandle(IWorkerService workerService)
-    {
-        _workerService = workerService;
-    }
-    
     /// <inheritdoc />
     public override void Configure()
     {
@@ -23,6 +22,7 @@ public class CreateWorkerHandle
         {
             sum.Summary = "Создание сотрудника";
         });
+        AllowAnonymous();
     }
     
     /// <summary>
