@@ -8,7 +8,7 @@ namespace Workers.Api.Endpoints.Worker.CreateWorker;
 /// Метод создания сотрудника
 /// </summary>
 /// <param name="workerService"></param>
-public class CreateWorkerHandle(IWorkerService workerService) 
+public sealed class CreateWorkerHandle(IWorkerService workerService) 
     : Endpoint<CreateWorkerRequest, int>
 {
     private readonly IWorkerService _workerService = workerService;

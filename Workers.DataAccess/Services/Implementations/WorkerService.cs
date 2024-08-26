@@ -13,4 +13,9 @@ public sealed class WorkerService : IWorkerService
     {
         return 0;
     }
+    
+    /// <inheritdoc/> 
+    public async Task DeleteWorkerAsync(int workerId)
+    {
+    }
 }
