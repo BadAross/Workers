@@ -34,7 +34,8 @@ public sealed class GetManyWorkerHandle(IWorkerService workerService)
     public override async Task HandleAsync(
         GetManyWorkerRequest req, CancellationToken ct)
     {
-        var result = await _workerService.GetManyWorkerAsync(req);
+        var result = await 
+            _workerService.GetManyWorkerAsync(req, ct);
         await SendAsync(result, cancellation: ct);
     }
 }

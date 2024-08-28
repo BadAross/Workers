@@ -7,8 +7,19 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Config\" />
       <Folder Include="Validators\Worker\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Dapper" Version="2.1.35" />
+      <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+      <PackageReference Include="Npgsql" Version="8.0.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="Microsoft.AspNetCore.Http.Abstractions">
+        <HintPath>..\..\..\..\..\..\Program Files\dotnet\shared\Microsoft.AspNetCore.App\8.0.0\Microsoft.AspNetCore.Http.Abstractions.dll</HintPath>
+      </Reference>
     </ItemGroup>
 
 </Project>

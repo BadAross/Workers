@@ -7,30 +7,38 @@ namespace Workers.DataAccess.Services.Interfaces;
 /// Интерфейс работы с сотрудниками
 /// </summary>
 public interface IWorkerService
-{ 
+{
     /// <summary>
     /// Метод создания сотрудника
     /// </summary>
     /// <param name="request">Запрос</param>
+    /// <param name="cancellationToken">Токен отмены</param>
     /// <returns>Идентификатор созданного сотрудника</returns>
-    Task<int> CreateWorkerAsync(CreateWorkerRequest request);
-    
+    Task<int> CreateWorkerAsync(
+        CreateWorkerRequest request, CancellationToken cancellationToken);
+
     /// <summary>
     /// Метод удаления сотрудника
     /// </summary>
     /// <param name="workerId">Идентификатор сотрудника</param>
-    Task DeleteWorkerAsync(int workerId);
-    
+    /// <param name="cancellationToken">Токен отмены</param>
+    Task DeleteWorkerAsync(
+        int workerId, CancellationToken cancellationToken);
+
     /// <summary>
     /// Метод получения сотрудника по фильтрам
     /// </summary>
     /// <param name="filter">Фильтр</param>
+    /// <param name="cancellationToken">Токен отмены</param>
     /// <returns>Список сотрудников</returns>
-    Task<GetManyWorkerResponse> GetManyWorkerAsync(GetManyWorkerRequest filter);
-    
+    Task<GetManyWorkerResponse> GetManyWorkerAsync(
+        GetManyWorkerRequest filter, CancellationToken cancellationToken);
+
     /// <summary>
     /// Метод получения сотрудника по фильтрам
     /// </summary>
     /// <param name="request">Запрос</param>
-    Task UpdateWorkerAsync(UpdateWorkerRequest request);
+    /// <param name="cancellationToken">Токен отмены</param>
+    Task UpdateWorkerAsync(
+        UpdateWorkerRequest request, CancellationToken cancellationToken);
 }

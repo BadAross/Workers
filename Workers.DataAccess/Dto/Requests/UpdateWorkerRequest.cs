@@ -1,4 +1,6 @@
-﻿namespace Workers.DataAccess.Dto.Requests;
+﻿using Workers.DataAccess.Dto.Bases;
+
+namespace Workers.DataAccess.Dto.Requests;
 
 /// <summary>
 /// Модель запроса на обновление данных сотрудника
@@ -26,14 +28,9 @@ public sealed class UpdateWorkerRequest
     public string? Phone { set; get; }
     
     /// <summary>
-    /// Идентификатор типа паспорта
+    /// Данные паспорта
     /// </summary>
-    public int PassportTypeId { set; get; }
-    
-    /// <summary>
-    /// Номер паспорта
-    /// </summary>
-    public string PassportNumber { set; get; } = null!;
+    public WritePassport Passport { set; get; } = null!;
     
     /// <summary>
     /// Идентификатор отдлеа

@@ -31,7 +31,7 @@ public sealed class UpdateWorkerHandle(IWorkerService workerService)
     {
         var workerId = Route<int>("workerId");
         req.SetId(workerId);
-        await _workerService.UpdateWorkerAsync(req);
+        await _workerService.UpdateWorkerAsync(req, ct);
         await SendOkAsync(ct);
     }
 }

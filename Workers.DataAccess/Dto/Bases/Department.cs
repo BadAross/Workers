@@ -1,4 +1,6 @@
-﻿namespace Workers.DataAccess.Dto.Bases;
+﻿using Workers.DataAccess.Extensions.DapperAttributeMapper;
+
+namespace Workers.DataAccess.Dto.Bases;
 
 /// <summary>
 /// Dto модели отдела
@@ -8,17 +10,18 @@ public sealed class Department
     /// <summary>
     /// Идентификатор
     /// </summary>
-    public int Id { set; get; }
+    [Column("department_id")] 
+    public int Id { init; get; }
     
     /// <summary>
     /// Название отдела
     /// </summary>
-    public string Name { set; get; } = null!;
+    public string Name { init; get; } = null!;
 
     /// <summary>
     /// Номер телефона
     /// </summary>
-    public string? Phone { set; get; }
+    public string? Phone { init; get; }
 
     /// <summary>
     /// Компания

@@ -33,7 +33,7 @@ public sealed class CreateWorkerHandle(IWorkerService workerService)
     public override async Task HandleAsync(
         CreateWorkerRequest req, CancellationToken ct)
     {
-        var result = await _workerService.CreateWorkerAsync(req);
+        var result = await _workerService.CreateWorkerAsync(req, ct);
         await SendAsync(result, cancellation: ct);
     }
 }

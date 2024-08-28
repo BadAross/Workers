@@ -31,7 +31,7 @@ public sealed class DeleteWorkerHandle(IWorkerService workerService)
          CancellationToken ct)
     {
         var workerId = Route<int>("workerId");
-        await _workerService.DeleteWorkerAsync(workerId);
+        await _workerService.DeleteWorkerAsync(workerId, ct);
         await SendOkAsync(ct);
     }
 }

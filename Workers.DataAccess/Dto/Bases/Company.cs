@@ -1,4 +1,6 @@
-﻿namespace Workers.DataAccess.Dto.Bases;
+﻿using Workers.DataAccess.Extensions.DapperAttributeMapper;
+
+namespace Workers.DataAccess.Dto.Bases;
 
 /// <summary>
 /// Dto модели компании
@@ -6,12 +8,13 @@
 public sealed class Company
 {
     /// <summary>
-    /// идентификатор
+    /// Идентификатор
     /// </summary>
-    public int Id { set; get; }
+    [Column("company_id")] 
+    public int Id { init; get; }
 
     /// <summary>
     /// Название 
     /// </summary>
-    public string Name { set; get; } = null!;
+    public string Name { init; get; } = null!;
 }

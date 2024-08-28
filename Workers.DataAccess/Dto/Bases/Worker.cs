@@ -1,4 +1,6 @@
-﻿namespace Workers.DataAccess.Dto.Bases;
+﻿using Workers.DataAccess.Extensions.DapperAttributeMapper;
+
+namespace Workers.DataAccess.Dto.Bases;
 
 /// <summary>
 /// Dto модели сотрудника
@@ -8,6 +10,7 @@ public sealed class Worker
     /// <summary>
     /// Идетнификатор сотрудника
     /// </summary>
+    [Column("worker_id")]
     public int Id { set; get; }
 
     /// <summary>
@@ -28,7 +31,7 @@ public sealed class Worker
     /// <summary>
     /// Паспортные данные
     /// </summary>
-    public Passport Passport { set; get; } = null!;
+    public ReadPassport Passport { set; get; } = null!;
     
     /// <summary>
     /// Отдел
