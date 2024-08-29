@@ -16,6 +16,79 @@ public sealed class WorkerRepository(IDbManager dbManager)
     : IWorkerRepository
 {
     private readonly IDbConnection _dbConnection = dbManager.GetConnection();
+
+    #region Queries
+
+    private static string GetWorkerQuery()
+        => @"INSERT INTO base.worker 
+            (name, surname, phone, passport_id, department_id) 
+            VALUES (@name, @surname, @phone, @passportId, @departmentId)
+            RETURNING id";
+    
+    private static string DeleteWorkerQuery()
+        => @"DELETE FROM base.worker
+            WHERE id = @id";
+    
+    private static string GetManyWorkerQuery() 
+        => @"SELECT 
+                w.id AS worker_id, 
+                w.name, 
+                w.surname, 
+                w.phone, 
+                p.id AS passport_id, 
+                pt.name AS type,
+                p.passport_number AS number, 
+                d.id AS department_id, 
+                d.name,
+                d.phone,
+                c.id AS company_id, 
+                c.name
+            FROM 
+                base.worker w
+            LEFT JOIN 
+                base.passport p ON w.passport_id = p.Id
+            LEFT JOIN 
+                base.passport_type pt ON p.passport_type_id = pt.Id
+            LEFT JOIN 
+                base.department d ON w.department_id = d.Id
+            LEFT JOIN 
+                base.company c ON d.company_id = c.Id ";
+
+    private static string UpdateWorkerQuery()
+        => @"UPDATE base.worker
+            SET name = @name,
+                surname = @surname,
+                phone = @phone,
+                department_id = @departmentId
+            WHERE id = @id";
+
+    private static string IsThereThisPassportQuery()
+        => @"SELECT 1 
+                FROM base.passport 
+            WHERE passport_number = @Number";
+
+    private static string CreatePassportQuery()
+        => @"INSERT INTO base.passport 
+            (passport_type_id, passport_number) 
+            VALUES (@passportTypeId, @passportNumber)
+            RETURNING id";
+
+    private static string UpdatePassportQuery()
+        => @"UPDATE base.passport
+            SET passport_type_id = @typeId,
+                passport_number = @number
+            WHERE id = @id";
+
+    private static string DeletePassportQuery()
+        => @"DELETE FROM base.passport
+            WHERE id = @id";
+
+    private static string GetWorkerPassportIdQuery()
+        => @"SELECT passport_id
+            FROM base.worker 
+            WHERE id = @Id";
+
+    #endregion
     
     /// <inheritdoc/> 
     public async Task<int> CreateWorkerAsync(
@@ -33,10 +106,7 @@ public sealed class WorkerRepository(IDbManager dbManager)
                 throw new InvalidOperationException("Не удалось создать паспорт.");
             }
             
-            var sql = @"INSERT INTO base.worker 
-                    (name, surname, phone, passport_id, department_id) 
-                    VALUES (@name, @surname, @phone, @passportId, @departmentId)
-                    RETURNING id";    
+            var sql = GetWorkerQuery();    
             
             var commandDefinition = new CommandDefinition(sql,  
                 parameters: new 
@@ -72,11 +142,10 @@ public sealed class WorkerRepository(IDbManager dbManager)
 
         try
         { 
-            var passportId = await 
-                         GetWorkerPassportId(workerId, cancellationToken);
+            var passportId = 
+                await GetWorkerPassportId(workerId, cancellationToken);
             
-            var sql = @"DELETE FROM base.worker
-                WHERE id = @id";
+            var sql = DeleteWorkerQuery();
             
             var commandDefinition = new CommandDefinition(sql,  
                 parameters: new 
@@ -103,29 +172,7 @@ public sealed class WorkerRepository(IDbManager dbManager)
     public async Task<GetManyWorkerResponse> GetManyWorkerAsync(
         GetManyWorkerRequest filter, CancellationToken cancellationToken)
     {
-        var sql = @"SELECT 
-                    w.id AS worker_id, 
-                    w.name, 
-                    w.surname, 
-                    w.phone, 
-                    p.id AS passport_id, 
-                    pt.name AS type,
-                    p.passport_number AS number, 
-                    d.id AS department_id, 
-                    d.name,
-                    d.phone,
-                    c.id AS company_id, 
-                    c.name
-                FROM 
-                    base.worker w
-                LEFT JOIN 
-                    base.passport p ON w.passport_id = p.Id
-                LEFT JOIN 
-                    base.passport_type pt ON p.passport_type_id = pt.Id
-                LEFT JOIN 
-                    base.department d ON w.department_id = d.Id
-                LEFT JOIN 
-                    base.company c ON d.company_id = c.Id ";
+        var sql = GetManyWorkerQuery();
 
         var parameters = new DynamicParameters();
 
@@ -177,12 +224,7 @@ public sealed class WorkerRepository(IDbManager dbManager)
             await UpdatePassport(request.Id, request.Passport, 
                 transaction, cancellationToken);
             
-            var sql = @"UPDATE base.worker
-                SET name = @name,
-                    surname = @surname,
-                    phone = @phone,
-                    department_id = @departmentId
-                WHERE id = @id";
+            var sql = UpdateWorkerQuery();
             
             var commandDefinition = new CommandDefinition(sql, 
                 parameters: new
@@ -211,9 +253,7 @@ public sealed class WorkerRepository(IDbManager dbManager)
     public async Task<bool> IsThereThisPassportAsync(
         string passportNumber, CancellationToken cancellationToken)
     {
-        var sql = @"SELECT 1 
-                    FROM base.passport 
-                    WHERE passport_number = @Number";  
+        var sql = IsThereThisPassportQuery();  
         
         var commandDefinition = new CommandDefinition(sql,  
             parameters: new
@@ -239,10 +279,7 @@ public sealed class WorkerRepository(IDbManager dbManager)
         WritePassport passport, IDbTransaction transaction,
         CancellationToken cancellationToken)
     {
-        var sql = @"INSERT INTO base.passport 
-                    (passport_type_id, passport_number) 
-                    VALUES (@passportTypeId, @passportNumber)
-                    RETURNING id";    
+        var sql = CreatePassportQuery();    
         
         var commandDefinition = new CommandDefinition(sql,  
             parameters: new
@@ -273,10 +310,7 @@ public sealed class WorkerRepository(IDbManager dbManager)
         var passportId = 
             await GetWorkerPassportId(workerId, cancellationToken);
         
-        var sql = @"UPDATE base.passport
-                    SET passport_type_id = @typeId,
-                        passport_number = @number
-                    WHERE id = @id";
+        var sql = UpdatePassportQuery();
         
         var commandDefinition = new CommandDefinition(sql,
             parameters: new
@@ -292,17 +326,16 @@ public sealed class WorkerRepository(IDbManager dbManager)
     }
     
     /// <summary>
-    /// 
+    /// Метод Удаления пасспортных данных
     /// </summary>
-    /// <param name="workerId"></param>
-    /// <param name="transaction"></param>
-    /// <param name="cancellationToken"></param>
+    /// <param name="passportId">Идентификатор пасспорта</param>
+    /// <param name="transaction">Транзакция</param>
+    /// <param name="cancellationToken">Токен отмены</param>
     private async Task DeletePassport(
         int passportId, IDbTransaction transaction,
         CancellationToken cancellationToken)
     {
-        var sql = @"DELETE FROM base.passport
-                WHERE id = @id";
+        var sql = DeletePassportQuery();
         
         var commandDefinition = new CommandDefinition(sql,
             parameters: new
@@ -324,9 +357,7 @@ public sealed class WorkerRepository(IDbManager dbManager)
     private async Task<int> GetWorkerPassportId(
         int workerId, CancellationToken cancellationToken)
     {
-        var sql = @"SELECT passport_id
-                    FROM base.worker 
-                    WHERE id = @Id";   
+        var sql = GetWorkerPassportIdQuery();   
         
         var commandDefinition = new CommandDefinition(sql,  
             parameters: new

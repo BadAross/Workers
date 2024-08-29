@@ -44,7 +44,7 @@ public static class ServiceProviderExtension
     {
         services.AddScoped<IWorkerService, WorkerService>();
         services.AddScoped<IWorkerRepository, WorkerRepository>();
-        services.AddScoped<IDbManager, NpgsqlManager>();
+        services.AddTransient<IDbManager, NpgsqlManager>();
     }
     
     /// <summary>
