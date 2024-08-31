@@ -4,6 +4,7 @@ using Workers.DataAccess.Db.Interfaces;
 using Workers.DataAccess.Dto.Bases;
 using Workers.DataAccess.Dto.Requests;
 using Workers.DataAccess.Dto.Responses;
+using Workers.DataAccess.Exceptions;
 using Workers.DataAccess.Repositories.Interface;
 using static Workers.DataAccess.Constants.NpgsqlDbConstants;
 
@@ -122,7 +123,7 @@ public sealed class WorkerRepository(IDbManager dbManager)
             
             if (createdPassportId <= 0)
             {
-                throw new InvalidOperationException("Не удалось создать паспорт.");
+                throw new CreatePassportException("Не удалось создать паспорт.");
             }
             
             var sql = GetWorkerQuery();    
@@ -146,7 +147,12 @@ public sealed class WorkerRepository(IDbManager dbManager)
 
             return workerId;
         }
-        catch
+        catch (CreatePassportException ex)
+        {
+            transaction.Rollback();
+            throw;
+        }
+        catch (Exception ex)
         {
             transaction.Rollback();
             throw new InvalidOperationException("Не удалось создать сотрудника.");
@@ -157,13 +163,18 @@ public sealed class WorkerRepository(IDbManager dbManager)
     public async Task DeleteWorkerAsync(
         int workerId, CancellationToken cancellationToken)
     {
+        var passportId = 
+            await GetWorkerPassportId(workerId, cancellationToken);
+     
+         if (passportId == 0)
+         {
+             throw new InvalidOperationException("Сотрудник не найден.");
+         }
+         
         using var transaction = _dbConnection.BeginTransaction();
 
         try
         { 
-            var passportId = 
-                await GetWorkerPassportId(workerId, cancellationToken);
-            
             var sql = DeleteWorkerQuery();
             
             var commandDefinition = new CommandDefinition(sql,  

@@ -1,12 +1,5 @@
 ﻿using FastEndpoints.Swagger;
 using NSwag;
-using Workers.DataAccess.Db.Implementations;
-using Workers.DataAccess.Db.Interfaces;
-using Workers.DataAccess.Extensions.DapperAttributeMapper;
-using Workers.DataAccess.Repositories.Implementations;
-using Workers.DataAccess.Repositories.Interface;
-using Workers.DataAccess.Services.Implementations;
-using Workers.DataAccess.Services.Interfaces;
 
 namespace Workers.Api.Extensions;
 
@@ -34,26 +27,5 @@ public static class ServiceProviderExtension
             };
             settings.FlattenSchema = true;
         });
-    }
-
-    /// <summary>
-    /// Регистрация интерфесов-реализаций
-    /// </summary>
-    /// <param name="services">Сервис</param>
-    public static void AddScope(this IServiceCollection services)
-    {
-        services.AddScoped<IWorkerService, WorkerService>();
-        services.AddScoped<IWorkerRepository, WorkerRepository>();
-        services.AddTransient<IDbManager, NpgsqlManager>();
-    }
-    
-    /// <summary>
-    /// Настройки дапера
-    /// </summary>
-    /// <param name="services">Сервис</param>
-    public static void DapperSettings(this IServiceCollection services)
-    {
-        TypeMapper.Initialize("Workers.DataAccess.Dto.Bases");
-        Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
     }
 }

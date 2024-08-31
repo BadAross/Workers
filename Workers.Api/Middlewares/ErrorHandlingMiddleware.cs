@@ -1,8 +1,7 @@
 ﻿using System.Net;
 using System.Text.Json;
-using Microsoft.AspNetCore.Http;
 
-namespace Workers.DataAccess.Middlewares;
+namespace Workers.Api.Middlewares;
 
 public class ErrorHandlingMiddleware(RequestDelegate next)
 {
