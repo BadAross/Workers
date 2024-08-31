@@ -11,22 +11,22 @@ public sealed class Worker
     /// Идетнификатор сотрудника
     /// </summary>
     [Column("worker_id")]
-    public int Id { set; get; }
+    public int Id { init; get; }
 
     /// <summary>
     /// Имя сотрудника
     /// </summary>
-    public string Name { set; get; } = null!;
+    public string Name { init; get; } = null!;
     
     /// <summary>
     /// Фамилия сотрудника
     /// </summary>
-    public string Surname { set; get; } = null!;
+    public string Surname { init; get; } = null!;
     
     /// <summary>
     /// Номер телефона
     /// </summary>
-    public string? Phone { set; get; }
+    public string? Phone { init; get; }
     
     /// <summary>
     /// Паспортные данные

@@ -18,6 +18,7 @@ public sealed class NpgsqlManager : IDbManager
         _dbConnection = new NpgsqlConnection(npgsqlConnection);
     }
 
+    /// <inheritdoc/> 
     public IDbConnection GetConnection() 
     {
         _dbConnection.Open();

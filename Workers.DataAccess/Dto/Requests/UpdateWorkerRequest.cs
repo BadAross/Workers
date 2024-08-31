@@ -15,27 +15,27 @@ public sealed class UpdateWorkerRequest
     /// <summary>
     /// Имя сотрудника
     /// </summary>
-    public string Name { set; get; } = null!;
+    public string Name { init; get; } = null!;
     
     /// <summary>
     /// Фамилия сотрудника
     /// </summary>
-    public string Surname { set; get; } = null!;
+    public string Surname { init; get; } = null!;
     
     /// <summary>
     /// Номер телефона
     /// </summary>
-    public string? Phone { set; get; }
+    public string? Phone { init; get; }
     
     /// <summary>
     /// Данные паспорта
     /// </summary>
-    public WritePassport Passport { set; get; } = null!;
+    public WritePassport Passport { init; get; } = null!;
     
     /// <summary>
     /// Идентификатор отдлеа
     /// </summary>
-    public int DepartmentId { set; get; }
+    public int DepartmentId { init; get; }
 
     /// <summary>
     /// Метод установки идентификатор сотрудника

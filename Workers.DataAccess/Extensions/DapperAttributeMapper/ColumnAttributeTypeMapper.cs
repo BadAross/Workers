@@ -3,7 +3,7 @@ using Dapper;
 
 namespace Workers.DataAccess.Extensions.DapperAttributeMapper;
 
-public class ColumnAttributeTypeMapper<T>() : FallBackTypeMapper(new SqlMapper.ITypeMap[]
+public sealed class ColumnAttributeTypeMapper<T>() : FallBackTypeMapper(new SqlMapper.ITypeMap[]
 {
     new CustomPropertyTypeMap(typeof(T),
         (type, columnName) =>

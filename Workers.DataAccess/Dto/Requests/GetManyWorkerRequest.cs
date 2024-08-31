@@ -8,10 +8,10 @@ public sealed class GetManyWorkerRequest
     /// <summary>
     /// Фильтр по идентификаторам компаний
     /// </summary>
-    public List<int>? CompanyIds { set; get; }
+    public List<int>? CompanyIds { init; get; }
     
     /// <summary>
     /// Фильтр по идентификаторам отделов компании
     /// </summary>
-    public List<int>? DepartmentIds { set; get; }
+    public List<int>? DepartmentIds { init; get; }
 }
