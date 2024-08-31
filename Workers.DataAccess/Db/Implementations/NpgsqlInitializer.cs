@@ -121,36 +121,41 @@ public static class NpgsqlInitializer
     public static async Task InitializeDb(IConfiguration configuration)
     {
        var connectionString = configuration["ConnectionStrings:PostgresConnection"];
+       if (connectionString is null)
+       {
+           throw new InvalidOperationException("Нет строки поключения к БД.");
+       }
        
-        await using (var initialConnection = GetNotDbNameConnection())
-        {
-            await initialConnection.OpenAsync();
+       await using (var initialConnection = GetNotDbNameConnection(connectionString))
+       {
+           await initialConnection.OpenAsync();
 
-            var dbGetName = GetDatabaseName(connectionString!);
-            var isInitialized = await IsDbInitialized(initialConnection, dbGetName!);
-            if (isInitialized)
-            {
-                return;
-            }
-            await CreateDb(initialConnection, dbGetName!);
-        }
+           var dbGetName = GetDatabaseName(connectionString);
+           var isInitialized = await IsDbInitialized(initialConnection, dbGetName!);
+           if (isInitialized)
+           {
+               return;
+           }
+           await CreateDb(initialConnection, dbGetName!);
+       }
         
-        await using var connection = new NpgsqlConnection(connectionString);
-        await connection.OpenAsync();
+       await using var connection = new NpgsqlConnection(connectionString);
+       await connection.OpenAsync();
 
-        await using var transaction = await connection.BeginTransactionAsync();
+       await using var transaction = await connection.BeginTransactionAsync();
 
-        try
-        {
-            await InitializeSchema(connection, transaction);
-            await transaction.CommitAsync();
-        }
-        catch (Exception)
-        {
-            await DeleteDb(connection.Database);
-            await transaction.RollbackAsync();
-            throw new InvalidOperationException("Не удалось создать БД.");
-        }
+       try
+       {
+           await InitializeSchema(connection, transaction);
+           await transaction.CommitAsync();
+       }
+       catch (Exception)
+       {
+           await using var deleteConnection = GetNotDbNameConnection(connectionString);
+           await DeleteDb(connection.Database, deleteConnection);
+           await transaction.RollbackAsync();
+           throw new InvalidOperationException("Не удалось создать БД.");
+       }
     }
     
     /// <summary>
@@ -238,14 +243,14 @@ public static class NpgsqlInitializer
     private static async Task CreateTable(string createTableQuery, 
         NpgsqlConnection connection, IDbTransaction transaction)
         => await connection.ExecuteAsync(createTableQuery, transaction);
-    
+
     /// <summary>
     /// Удаление БД
     /// </summary>
     /// <param name="dbName">Название БД</param>
-    private static async Task DeleteDb(string dbName)
+    /// <param name="deleteConnection">Подключение дял удаления</param>
+    private static async Task DeleteDb(string dbName, NpgsqlConnection deleteConnection)
     {
-        await using var deleteConnection = GetNotDbNameConnection();
         var query = DeleteDbQuery(dbName);
         await deleteConnection.ExecuteAsync(query);
     }
@@ -253,7 +258,15 @@ public static class NpgsqlInitializer
     /// <summary>
     /// Подучение подключения без названия БД
     /// </summary>
+    /// <param name="connectionString">Строка подключения</param>
     /// <returns>Подключение к БД</returns>
-    private static NpgsqlConnection GetNotDbNameConnection() 
-        => new NpgsqlConnection("Server=localhost; Port=5432; User Id=postgres; Password=postgres");
+    private static NpgsqlConnection GetNotDbNameConnection(string connectionString) 
+    {
+        var builder = new NpgsqlConnectionStringBuilder(connectionString)
+        {
+            Database = null
+        };
+
+        return new NpgsqlConnection(builder.ToString());
+    }
 }
