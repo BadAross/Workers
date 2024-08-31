@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using FastEndpoints;
 using FastEndpoints.Swagger;
 using Workers.Api.Extensions;
+using Workers.DataAccess.Db.Implementations;
 using Workers.DataAccess.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,8 @@ services.DapperSettings();
 services.AddFastEndpoints()
     .AddSwaggerGenWithSettings();
 services.AddScope();
+
+await NpgsqlInitializer.InitializeDb(builder.Configuration);
 
 var app = builder.Build();
 app.UseMiddleware<ErrorHandlingMiddleware>();

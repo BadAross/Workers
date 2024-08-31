@@ -1,10 +1,11 @@
 ﻿using System.Data;
 using Dapper;
-using Workers.DataAccess.DbConnection.Interfaces;
+using Workers.DataAccess.Db.Interfaces;
 using Workers.DataAccess.Dto.Bases;
 using Workers.DataAccess.Dto.Requests;
 using Workers.DataAccess.Dto.Responses;
 using Workers.DataAccess.Repositories.Interface;
+using static Workers.DataAccess.Constants.NpgsqlDbConstants;
 
 namespace Workers.DataAccess.Repositories.Implementations;
 
@@ -20,17 +21,22 @@ public sealed class WorkerRepository(IDbManager dbManager)
     #region Queries
 
     private static string GetWorkerQuery()
-        => @"INSERT INTO base.worker 
+        => $"""
+            INSERT INTO "{SchemeName}"."{WorkerTableName}"
             (name, surname, phone, passport_id, department_id) 
             VALUES (@name, @surname, @phone, @passportId, @departmentId)
-            RETURNING id";
+            RETURNING id
+            """;
     
     private static string DeleteWorkerQuery()
-        => @"DELETE FROM base.worker
-            WHERE id = @id";
+        => $"""
+            DELETE FROM "{SchemeName}"."{WorkerTableName}"
+            WHERE id = @id
+            """;
     
     private static string GetManyWorkerQuery() 
-        => @"SELECT 
+        => $"""
+            SELECT 
                 w.id AS worker_id, 
                 w.name, 
                 w.surname, 
@@ -44,49 +50,62 @@ public sealed class WorkerRepository(IDbManager dbManager)
                 c.id AS company_id, 
                 c.name
             FROM 
-                base.worker w
+                "{SchemeName}"."{WorkerTableName}" w
             LEFT JOIN 
-                base.passport p ON w.passport_id = p.Id
+                "{SchemeName}"."{PassportTableName}" p ON w.passport_id = p.Id
             LEFT JOIN 
-                base.passport_type pt ON p.passport_type_id = pt.Id
+                "{SchemeName}"."{PassportTypeTableName}" pt ON p.passport_type_id = pt.Id
             LEFT JOIN 
-                base.department d ON w.department_id = d.Id
+                "{SchemeName}"."{DepartmentTableName}" d ON w.department_id = d.Id
             LEFT JOIN 
-                base.company c ON d.company_id = c.Id ";
+                "{SchemeName}"."{CompanyTableName}" c ON d.company_id = c.Id 
+            """;
 
     private static string UpdateWorkerQuery()
-        => @"UPDATE base.worker
+        => $"""
+            UPDATE "{SchemeName}"."{WorkerTableName}"
             SET name = @name,
                 surname = @surname,
                 phone = @phone,
                 department_id = @departmentId
-            WHERE id = @id";
+            WHERE id = @id
+            """;
 
     private static string IsThereThisPassportQuery()
-        => @"SELECT 1 
-                FROM base.passport 
-            WHERE passport_number = @Number";
+        => $"""
+            SELECT 1 
+                FROM "{SchemeName}"."{PassportTableName}" 
+            WHERE passport_number = @Number
+            """;
 
     private static string CreatePassportQuery()
-        => @"INSERT INTO base.passport 
+        => $"""
+            INSERT INTO "{SchemeName}"."{PassportTableName}" 
             (passport_type_id, passport_number) 
             VALUES (@passportTypeId, @passportNumber)
-            RETURNING id";
+            RETURNING id
+            """;
 
     private static string UpdatePassportQuery()
-        => @"UPDATE base.passport
+        => $"""
+            UPDATE "{SchemeName}"."{PassportTableName}"
             SET passport_type_id = @typeId,
                 passport_number = @number
-            WHERE id = @id";
+            WHERE id = @id
+            """;
 
     private static string DeletePassportQuery()
-        => @"DELETE FROM base.passport
-            WHERE id = @id";
+        => $"""
+            DELETE FROM "{SchemeName}"."{PassportTableName}"
+            WHERE id = @id
+            """;
 
     private static string GetWorkerPassportIdQuery()
-        => @"SELECT passport_id
-            FROM base.worker 
-            WHERE id = @Id";
+        => $"""
+            SELECT passport_id
+            FROM "{SchemeName}"."{WorkerTableName}" 
+            WHERE id = @Id
+            """;
 
     #endregion
     

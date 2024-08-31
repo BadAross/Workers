@@ -1,7 +1,7 @@
 ﻿using FastEndpoints.Swagger;
 using NSwag;
-using Workers.DataAccess.DbConnection.Implementations;
-using Workers.DataAccess.DbConnection.Interfaces;
+using Workers.DataAccess.Db.Implementations;
+using Workers.DataAccess.Db.Interfaces;
 using Workers.DataAccess.Extensions.DapperAttributeMapper;
 using Workers.DataAccess.Repositories.Implementations;
 using Workers.DataAccess.Repositories.Interface;
@@ -11,7 +11,7 @@ using Workers.DataAccess.Services.Interfaces;
 namespace Workers.Api.Extensions;
 
 /// <summary>
-/// Класс расширения programm
+/// Класс расширения program
 /// </summary>
 public static class ServiceProviderExtension
 {

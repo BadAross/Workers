@@ -1,6 +1,6 @@
 ﻿using System.Data;
 
-namespace Workers.DataAccess.DbConnection.Interfaces;
+namespace Workers.DataAccess.Db.Interfaces;
 
 /// <summary>
 /// Интерфейс подключения к БД
@@ -11,5 +11,5 @@ public interface IDbManager
     /// Получение подключчения
     /// </summary>
     /// <returns>Открытое подключение к БД</returns>
-    public IDbConnection GetConnection();
+    IDbConnection GetConnection();
 }
