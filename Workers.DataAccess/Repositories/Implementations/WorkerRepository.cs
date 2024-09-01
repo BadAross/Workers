@@ -109,153 +109,76 @@ public sealed class WorkerRepository(IDbManager dbManager)
             """;
 
     #endregion
-    
+
     /// <inheritdoc/> 
-    public async Task<int> CreateWorkerAsync(
-        CreateWorkerRequest request, CancellationToken cancellationToken)
+    public async Task<int> CreateWorkerAsync(CreateWorkerRequest request, CancellationToken cancellationToken)
     {
         using var transaction = _dbConnection.BeginTransaction();
-        
         try
         {
-            var createdPassportId = await CreatePassport(
-                request.Passport, transaction, cancellationToken);
-            
-            if (createdPassportId <= 0)
-            {
-                throw new CreatePassportException("Не удалось создать паспорт.");
-            }
-            
-            var sql = GetWorkerQuery();    
-            
-            var commandDefinition = new CommandDefinition(sql,  
-                parameters: new 
-                {
-                    name = request.Name, 
-                    surname = request.Surname, 
-                    phone = request.Phone,
-                    passportId = createdPassportId,
-                    departmentId = request.DepartmentId
-                },
-                transaction,
-                cancellationToken: cancellationToken);
+            var createdPassportId = await CreatePassportAsync(request.Passport, transaction, cancellationToken);
+            ValidatePassportId(createdPassportId);
         
-            var workerId = await _dbConnection
-                .ExecuteScalarAsync<int>(commandDefinition);
-            
+            var workerId = await CreateWorkerInDatabaseAsync(request, createdPassportId, transaction, cancellationToken);
+        
             transaction.Commit();
-
             return workerId;
-        }
-        catch (CreatePassportException ex)
-        {
-            transaction.Rollback();
-            throw;
         }
         catch (Exception ex)
         {
             transaction.Rollback();
-            throw new InvalidOperationException("Не удалось создать сотрудника.");
+            throw HandleException(ex, "Не удалось создать сотрудника.");
         }
     }
     
     /// <inheritdoc/> 
-    public async Task DeleteWorkerAsync(
-        int workerId, CancellationToken cancellationToken)
+    public async Task DeleteWorkerAsync(int workerId, CancellationToken cancellationToken)
     {
-        var passportId = 
-            await GetWorkerPassportId(workerId, cancellationToken);
-     
-         if (passportId == 0)
-         {
-             throw new InvalidOperationException("Сотрудник не найден.");
-         }
-         
+        var passportId = await GetWorkerPassportIdAsync(workerId, cancellationToken);
+        ValidatePassportExists(passportId);
+    
         using var transaction = _dbConnection.BeginTransaction();
-
+    
         try
-        { 
-            var sql = DeleteWorkerQuery();
-            
-            var commandDefinition = new CommandDefinition(sql,  
-                parameters: new 
-                {
-                    id = workerId
-                },
-                transaction,
-                cancellationToken: cancellationToken);
-
-            await _dbConnection.ExecuteAsync(commandDefinition);
-            
-            await DeletePassport(passportId, transaction, cancellationToken);
-            
+        {
+            await DeleteWorkerFromDatabaseAsync(workerId, transaction, cancellationToken);
+            await DeletePassportAsync(passportId, transaction, cancellationToken);
+        
             transaction.Commit();
         }
-        catch
+        catch (Exception ex)
         {
             transaction.Rollback();
-            throw new InvalidOperationException("Не удалось удалить сотрудника.");
+            throw HandleException(ex, "Не удалось удалить сотрудника.");
         }
     }
-
+    
     /// <inheritdoc/> 
     public async Task<GetManyWorkerResponse> GetManyWorkerAsync(
         GetManyWorkerRequest filter, CancellationToken cancellationToken)
     {
         var sql = GetManyWorkerQuery();
-
         var parameters = new DynamicParameters();
-    
-        var whereAdded = false;
 
-        if (filter.CompanyIds != null && filter.CompanyIds.Any())
-        {
-            sql += $" WHERE d.company_id = ANY(@CompanyIds)";
-            parameters.Add("CompanyIds", filter.CompanyIds);
-            whereAdded = true;
-        }
-
-        if (filter.DepartmentIds != null && filter.DepartmentIds.Any())
-        {
-            sql += whereAdded ? " AND " : " WHERE ";
-            sql += $" w.department_id = ANY(@DepartmentIds)"; // Исправлено
-            parameters.Add("DepartmentIds", filter.DepartmentIds);
-        }
+        BuildWhereClause(ref sql, parameters, filter);
 
         try
         {
-            var workers = await 
-                _dbConnection.QueryAsync<Worker, ReadPassport, Department, Company, Worker>(
-                    sql,
-                    (worker, passport, department, company) =>
-                    {
-                        worker.Passport = passport;
-                        worker.Department = department;
-                        worker.Department.Company = company;
-                        return worker;
-                    },
-                    parameters,
-                    splitOn: "passport_id, department_id, company_id");
+            var workers = await GetWorkerFromDatabaseAsync(sql, parameters);
 
-            if (workers is null || !workers.Any())
+            if (workers == null || !workers.Any())
             {
-                throw new WorkerNotFoundException("Пользователи не найдены. Попробуйте изменить фильтр.");
+                throw new WorkerNotFoundException("Сотрудники не найдены. Попробуйте изменить фильтр.");
             }
 
-            var result = new GetManyWorkerResponse()
+            return new GetManyWorkerResponse
             {
                 Workers = workers.ToList()
             };
-
-            return result;
-        }
-        catch (WorkerNotFoundException ex)
-        {
-            throw ;
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Произошла ошибка при получении пользователей.", ex);
+            throw HandleException(ex, "Произошла ошибка при получении сотрудников.");
         }
     }
     
@@ -267,34 +190,21 @@ public sealed class WorkerRepository(IDbManager dbManager)
 
         try
         {
-            await UpdatePassport(request.Id, request.Passport, 
+            await UpdatePassportAsync(request.Id, request.Passport, 
                 transaction, cancellationToken);
-            
-            var sql = UpdateWorkerQuery();
-            
-            var commandDefinition = new CommandDefinition(sql, 
-                parameters: new
-                {
-                    name = request.Name,
-                    surname = request.Surname,
-                    phone = request.Phone,
-                    departmentId = request.DepartmentId,
-                    id = request.Id
-                }, 
-                transaction,
-                cancellationToken: cancellationToken);
 
-            await _dbConnection.ExecuteAsync(commandDefinition);
+            await UpdateWorkerInDatabaseAsync(
+                request, transaction, cancellationToken);
             
             transaction.Commit();
         }
-        catch
+        catch (Exception ex)
         {
             transaction.Rollback();
-            throw new InvalidOperationException("Не удалось изменить сотрудника.");
+            throw HandleException(ex, "Не удалось изменить сотрудника.");
         }
     }
-
+    
     /// <inheritdoc/> 
     public async Task<bool> IsThereThisPassportAsync(
         string passportNumber, CancellationToken cancellationToken)
@@ -321,7 +231,7 @@ public sealed class WorkerRepository(IDbManager dbManager)
     /// <param name="transaction">Транзакция</param>
     /// <param name="cancellationToken">Токен отмены</param>
     /// <returns>Идентификатор паспорта</returns>
-    private async Task<int> CreatePassport(
+    private async Task<int> CreatePassportAsync(
         WritePassport passport, IDbTransaction transaction,
         CancellationToken cancellationToken)
     {
@@ -349,12 +259,12 @@ public sealed class WorkerRepository(IDbManager dbManager)
     /// <param name="passport">Данные паспорта</param>
     /// <param name="transaction">Транзация</param>
     /// <param name="cancellationToken">Токен отмены</param>
-    private async Task UpdatePassport(int workerId,
+    private async Task UpdatePassportAsync(int workerId,
         WritePassport passport, IDbTransaction transaction,
         CancellationToken cancellationToken)
     {
         var passportId = 
-            await GetWorkerPassportId(workerId, cancellationToken);
+            await GetWorkerPassportIdAsync(workerId, cancellationToken);
         
         var sql = UpdatePassportQuery();
         
@@ -377,7 +287,7 @@ public sealed class WorkerRepository(IDbManager dbManager)
     /// <param name="passportId">Идентификатор пасспорта</param>
     /// <param name="transaction">Транзакция</param>
     /// <param name="cancellationToken">Токен отмены</param>
-    private async Task DeletePassport(
+    private async Task DeletePassportAsync(
         int passportId, IDbTransaction transaction,
         CancellationToken cancellationToken)
     {
@@ -400,7 +310,7 @@ public sealed class WorkerRepository(IDbManager dbManager)
     /// <param name="workerId">Идентификатор сотрудника</param>
     /// <param name="cancellationToken">Токен отмены</param>
     /// <returns>Идентификатор паспорта</returns>
-    private async Task<int> GetWorkerPassportId(
+    private async Task<int> GetWorkerPassportIdAsync(
         int workerId, CancellationToken cancellationToken)
     {
         var sql = GetWorkerPassportIdQuery();   
@@ -416,5 +326,177 @@ public sealed class WorkerRepository(IDbManager dbManager)
             .QueryFirstOrDefaultAsync<int>(commandDefinition);
 
         return passportId;
+    }  
+    
+    /// <summary>
+    /// Создание сотрудника
+    /// </summary>
+    /// <param name="request">Данные сотрудника</param>
+    /// <param name="passportId">Идентификатор созданного пасспорта</param>
+    /// <param name="transaction">Транзакция</param>
+    /// <param name="cancellationToken">Токен отмены</param>
+    /// <returns>Идентификатор созданного сотрудника</returns>
+    private async Task<int> CreateWorkerInDatabaseAsync(
+        CreateWorkerRequest request, int passportId, 
+        IDbTransaction transaction, CancellationToken cancellationToken)
+    {
+        var sql = GetWorkerQuery();
+        var commandDefinition = new CommandDefinition(sql,  
+            parameters: new 
+            {
+                name = request.Name, 
+                surname = request.Surname, 
+                phone = request.Phone,
+                passportId,
+                departmentId = request.DepartmentId
+            }, 
+            transaction,
+            cancellationToken: cancellationToken);
+
+        return await _dbConnection.ExecuteScalarAsync<int>(commandDefinition);
+    }
+
+    /// <summary>
+    /// Удаление сотрудника
+    /// </summary>
+    /// <param name="workerId">Идентификатор сотрудника</param>
+    /// <param name="transaction">Транзакция</param>
+    /// <param name="cancellationToken">Токен отмены</param>
+    private async Task DeleteWorkerFromDatabaseAsync(int workerId, IDbTransaction transaction, CancellationToken cancellationToken)
+    {
+        var sql = DeleteWorkerQuery();
+        var commandDefinition = new CommandDefinition(sql,  
+            parameters: new 
+            {
+                id = workerId
+            },
+            transaction,
+            cancellationToken: cancellationToken);
+
+        await _dbConnection.ExecuteAsync(commandDefinition);
+    }
+    
+    /// <summary>
+    /// Получение списка сотрудников
+    /// </summary>
+    /// <param name="sql">Запрос</param>
+    /// <param name="parameters">Параметры</param>
+    /// <returns>Список сотрудников</returns>
+    private async Task<IEnumerable<Worker>> GetWorkerFromDatabaseAsync(string sql, DynamicParameters parameters)
+    {
+        return await _dbConnection.QueryAsync<Worker, ReadPassport, Department, Company, Worker>(
+            sql,
+            (worker, passport, department, company) =>
+            {
+                worker.Passport = passport;
+                worker.Department = department;
+                worker.Department.Company = company;
+                return worker;
+            },
+            parameters,
+            splitOn: "passport_id, department_id, company_id");
+    }
+
+    /// <summary>
+    /// Изменение данных сотрудника
+    /// </summary>
+    /// <param name="request">Запрос</param>
+    /// <param name="transaction">Транзакция</param>
+    /// <param name="cancellationToken">Токен отмены</param>
+    private async Task UpdateWorkerInDatabaseAsync(
+        UpdateWorkerRequest request, IDbTransaction transaction, 
+        CancellationToken cancellationToken)
+    {
+        var sql = UpdateWorkerQuery();
+            
+        var commandDefinition = new CommandDefinition(sql, 
+            parameters: new
+            {
+                name = request.Name,
+                surname = request.Surname,
+                phone = request.Phone,
+                departmentId = request.DepartmentId,
+                id = request.Id
+            }, 
+            transaction,
+            cancellationToken: cancellationToken);
+
+        await _dbConnection.ExecuteAsync(commandDefinition);
+    }  
+
+    /// <summary>
+    /// Проверка создания паспорта
+    /// </summary>
+    /// <param name="passportId">Идентификатор созданного паспорта</param>
+    /// <exception cref="CreatePassportException">Если идентификатор меньше или равен 0
+    /// - пасспорт не создан</exception>
+    private static void ValidatePassportId(int passportId)
+    {
+        if (passportId <= 0)
+        {
+            throw new CreatePassportException("Не удалось создать паспорт.");
+        }
+    }
+
+    /// <summary>
+    /// Проверка наличия паспорта сотрудника
+    /// </summary>
+    /// <param name="passportId">Идентификатор паспорта</param>
+    /// <exception cref="PassportNotFoundException">Если идентификатор равен 0, паспорт отсутвует</exception>
+    private static void ValidatePassportExists(int passportId)
+    {
+        if (passportId == 0)
+        {
+            throw new PassportNotFoundException("Паспорт сотрудника не найден.");
+        }
+    }
+    
+    /// <summary>
+    /// Добавление фильтров к запросу
+    /// </summary>
+    /// <param name="sql">Запрос</param>
+    /// <param name="parameters">Праметры</param>
+    /// <param name="filter">Фильтры</param>
+    private static void BuildWhereClause(ref string sql, DynamicParameters parameters, GetManyWorkerRequest filter)
+    {
+        var whereAdded = false;
+
+        if (filter.CompanyIds != null && filter.CompanyIds.Count != 0)
+        {
+            sql += $" WHERE d.company_id = ANY(@CompanyIds)";
+            parameters.Add("CompanyIds", filter.CompanyIds);
+            whereAdded = true;
+        }
+
+        if (filter.DepartmentIds != null && filter.DepartmentIds.Count != 0)
+        {
+            sql += whereAdded ? " AND " : " WHERE ";
+            sql += $" w.department_id = ANY(@DepartmentIds)";
+            parameters.Add("DepartmentIds", filter.DepartmentIds);
+        }
+    }
+    
+    /// <summary>
+    /// Обработчик исключений при создании сотрудника
+    /// </summary>
+    /// <param name="ex">Исключение</param>
+    /// <param name="defaultMessage"></param>
+    /// <returns>Ошибку в зависимости от типа исключения</returns>
+    private static Exception HandleException(Exception ex, string defaultMessage)
+    {
+        switch (ex)
+        {
+            case CreatePassportException:
+                return ex;
+
+            case PassportNotFoundException:
+                return ex;
+
+            case WorkerNotFoundException:
+                return ex;
+
+            default:
+                return new InvalidOperationException(defaultMessage, ex);
+        }
     }
 }
