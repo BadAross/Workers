@@ -205,42 +205,58 @@ public sealed class WorkerRepository(IDbManager dbManager)
         var sql = GetManyWorkerQuery();
 
         var parameters = new DynamicParameters();
+    
+        var whereAdded = false;
 
         if (filter.CompanyIds != null && filter.CompanyIds.Any())
         {
-            sql += " AND w.company_id IN @CompanyIds";
+            sql += $" WHERE d.company_id = ANY(@CompanyIds)";
             parameters.Add("CompanyIds", filter.CompanyIds);
+            whereAdded = true;
         }
 
         if (filter.DepartmentIds != null && filter.DepartmentIds.Any())
         {
-            sql += " AND w.department_id IN @DepartmentIds";
+            sql += whereAdded ? " AND " : " WHERE ";
+            sql += $" w.department_id = ANY(@DepartmentIds)"; // Исправлено
             parameters.Add("DepartmentIds", filter.DepartmentIds);
         }
 
-        var workers = await 
-            _dbConnection.QueryAsync<Worker, ReadPassport, Department, Company, Worker>(
-            sql,
-            (worker, passport, department, company) =>
+        try
+        {
+            var workers = await 
+                _dbConnection.QueryAsync<Worker, ReadPassport, Department, Company, Worker>(
+                    sql,
+                    (worker, passport, department, company) =>
+                    {
+                        worker.Passport = passport;
+                        worker.Department = department;
+                        worker.Department.Company = company;
+                        return worker;
+                    },
+                    parameters,
+                    splitOn: "passport_id, department_id, company_id");
+
+            if (workers is null || !workers.Any())
             {
-                worker.Passport = passport;
-                worker.Department = department;
-                worker.Department.Company = company;
-                return worker;
-            },
-            parameters,
-            splitOn: "passport_id, department_id, company_id");
+                throw new WorkerNotFoundException("Пользователи не найдены. Попробуйте изменить фильтр.");
+            }
 
-        if (workers is null)
-        {
-            throw new InvalidOperationException("Пользователи не анйдены. Попробуйте изменить фильтр.");
+            var result = new GetManyWorkerResponse()
+            {
+                Workers = workers.ToList()
+            };
+
+            return result;
         }
-        var result = new GetManyWorkerResponse()
+        catch (WorkerNotFoundException ex)
         {
-            Workers = workers.ToList()
-        };
-
-        return result;
+            throw ;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Произошла ошибка при получении пользователей.", ex);
+        }
     }
     
     /// <inheritdoc/> 
